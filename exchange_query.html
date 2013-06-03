@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<TITLE>Currency Converter</TITLE>
+<style>
+body {
+	background-color: #2A333C;
+	color: #ECE9D7;
+	font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif;
+	font-size: 16px;
+	line-height: 20px;
+	margin: 0;
+}
+
+#submit,#cancel,#clear {
+	width: 100px;
+	height: 30px;
+	color: white;
+	background-color: #0099FF;
+	font-family: Georgia font-style :   bold;
+	font-size: 18px;
+}
+
+.bordered {
+	border-style: solid;
+	border-width: medium;
+}
+</style>
+<script	src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript">
+	var delay = 10000;
+	var timer = null;
+	var count = 0;
+	var initial = 0;
+	var delta = 0;
+	$(document).ready(
+			function() {
+
+				if ($('#fromCurrency').val() == '')
+					$('#submit').attr('disabled', 'disabled');
+				$('#fromCurrency').change(function() {
+					if ($(this).val() != '')
+						$('#submit').removeAttr('disabled');
+				});
+				$("#clear").click(function() {
+					$('#status').text('');
+				});
+				$("#cancel").click(function() {
+					if (timer)
+						clearInterval(timer);
+					$("#status").append("Stopped\n");
+				});
+				$("#submit").click(
+						function() {
+							var fromCurrency = $("#fromCurrency").val();
+							var toCurrency = $("#toCurrency").val();
+							if (timer)
+								clearInterval(timer);
+							$("#status")
+									.append(
+											"Running with poll rate: " + delay
+													+ "ms\n");
+							$("#status").append(
+									"Getting Exchange Rate: " + fromCurrency
+											+ " -> " + toCurrency + "\n");
+							if ($("#poll") != '')
+								delay = $("#poll").val();
+							timer = setInterval(function() {
+								fetch(fromCurrency, toCurrency)
+							}, delay);
+						});
+			});
+
+	function fetch(fromCurrency, toCurrency) {
+		var callback = function(data) {
+			$("#status").append("---------------------[" + count + "]-----------------------\n")
+			     .append(new Date());
+			if (data.query.results) {
+				var rate = data.query.results.double.content;
+				$("#status").append(JSON.stringify(data)).append("\n");
+				$("#rate").val(rate);
+				if (initial == 0)
+					initial = rate;
+				else {
+					delta = rate - initial;
+					if (delta != 0)
+						delta = delta.toFixed(4);
+					$("#rate").val(rate + " (" + delta + ")");
+				}
+				currentRate = rate;
+			} else {
+				$("#status").append(JSON.stringify(data)).append("\n");
+			}
+			$('#status').animate({
+				scrollTop : $(this)[0].scrollHeight - $(this).height()
+			}, 1000);
+
+		};
+
+		var url = "http://query.yahooapis.com/v1/public/yql?" + 
+				"q=select%20*%20from%20xml%20where%20url%3D'http%3A%2F%2Fwww.webservicex.net%2FCurrencyConvertor.asmx%2FConversionRate%3FFromCurrency%3D"
+				+ fromCurrency
+				+ "%26ToCurrency%3D"
+				+ toCurrency
+				+ "'&format=json&diagnostics=true"
+		$.getJSON(url, null, callback);
+		$("#iterations").val(++count);
+	}
+</script>
+</head>
+
+<body>
+	<div style='float: center; text-align: center' class="bordered">
+		<h1>Exchange rate calculator</h1>
+
+		<table align="center">
+			<tr>
+				<td><label>From Currency:</label></td>
+				<td><input type="text" id="fromCurrency" /></td>
+			</tr>
+			<tr>
+				<td><label>To Currency:</label></td>
+				<td><input type="text" id="toCurrency" /></td>
+			</tr>
+			<tr>
+				<td><label>Poll rate(ms):</label></td>
+				<td><input type="text" id="poll" /></td>
+			</tr>
+			<tr>
+				<td><label>Iterations</label></td>
+				<td><input type="text" id="iterations" value="iterations"
+					readonly /></td>
+			</tr>
+			<tr>
+				<td><label>Rate</label></td>
+				<td><input type="text" id="rate" value="rate" readonly /></td>
+			</tr>
+		</table>
+
+		<input type="submit" id="submit" value="Submit" /> <input
+			type="submit" id="cancel" value="Cancel" /> <input type="submit"
+			id="clear" value="Clear" /> <br /> <br />
+		<div id="status-area">
+			<textarea id="status" rows="25" cols="80"></textarea>
+		</div>
+	</div>
+	<p/>
+	<br/>
+	<br/>
+</body>
+</html>
