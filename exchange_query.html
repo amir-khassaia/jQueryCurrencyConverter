@@ -16,8 +16,6 @@ body {
 #submit,#cancel,#clear {
 	width: 100px;
 	height: 30px;
-	color: white;
-	background-color: #0099FF;
 	font-family: Georgia font-style :   bold;
 	font-size: 18px;
 }
@@ -36,7 +34,7 @@ body {
 	var delta = 0;
 	$(document).ready(
 			function() {
-
+				// disable submit on empty field
 				if ($('#fromCurrency').val() == '')
 					$('#submit').attr('disabled', 'disabled');
 				$('#fromCurrency').change(function() {
@@ -44,31 +42,37 @@ body {
 						$('#submit').removeAttr('disabled');
 				});
 				$("#clear").click(function() {
+					// clear status area
 					$('#status').text('');
 				});
 				$("#cancel").click(function() {
+					// stop the timer on cancel
 					if (timer)
 						clearInterval(timer);
 					$("#status").append("Stopped\n");
+					// disable cancel/enable submit
+					$(this).attr('disabled', 'disabled');
+					$('#submit').removeAttr('disabled');
 				});
 				$("#submit").click(
 						function() {
+							// disable submit/enable cancel
+							$(this).attr('disabled', 'disabled');
+							$('#cancel').removeAttr('disabled');
+
 							var fromCurrency = $("#fromCurrency").val();
 							var toCurrency = $("#toCurrency").val();
 							if (timer)
+								// clear existing timer if present
 								clearInterval(timer);
-							$("#status")
-									.append(
-											"Running with poll rate: " + delay
-													+ "ms\n");
-							$("#status").append(
-									"Getting Exchange Rate: " + fromCurrency
-											+ " -> " + toCurrency + "\n");
+							$("#status").append("Running with poll rate: " + delay + "ms\n");
+							$("#status").append("Getting Exchange Rate: " + fromCurrency + " -> " + toCurrency + "\n");
 							if ($("#poll") != '')
 								delay = $("#poll").val();
+							// setup new fetching timer
 							timer = setInterval(function() {
-								fetch(fromCurrency, toCurrency)
-							}, delay);
+										fetch(fromCurrency, toCurrency)
+								}, delay);
 						});
 			});
 
@@ -111,7 +115,7 @@ body {
 </head>
 
 <body>
-	<div style='float: center; text-align: center' class="bordered">
+	<div style='float: center; text-align: center'>
 		<h1>Exchange rate calculator</h1>
 
 		<table align="center">
